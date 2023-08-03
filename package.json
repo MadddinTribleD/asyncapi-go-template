@@ -59,6 +59,10 @@
       "maxTextSize": {
         "description": "It is possible that in case of an extremely large AsyncAPI document default mermaid recommended text size will not be enough. Then you need to explicitly make it larger",
         "default": 50000
+      },
+      "packageName": {
+        "description": "Name of the package that will be used for go files",
+        "default": "genasync"
       }
     },
     "nonRenderableFiles": [
