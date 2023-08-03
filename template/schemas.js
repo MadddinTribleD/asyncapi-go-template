@@ -60,11 +60,8 @@ export default function({ asyncapi ,params}) {
     return !name.startsWith('<anonymous-schema-');
   });
 
-  console.log(nonAnnonymousSchemasKeys);
-
   return nonAnnonymousSchemasKeys.map(name => {
     const schema = allSchemas.get(name);
-    console.log(schema);
 
     return (
       <File name={`schema_${name}.go`}>
