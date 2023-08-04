@@ -8,7 +8,7 @@ import (
   "github.com/rabbitmq/amqp091-go"
 )
 
-type PublishFunc func(payload []byte)
+type PublishFunc func(payload []byte) bool
 
 type Channel struct {
   Name    string
@@ -22,13 +22,15 @@ type MessageController interface {
 }
 
 func NewQueue(conn *amqp091.Connection, messageControllers ...MessageController) {
+  var forever chan struct{}
+
   for _, m := range messageControllers {
     for _, c := range m.Channels() {
       channel, err := conn.Channel()
 
       queue, err := channel.QueueDeclare(
         c.Name,
-        false,   // durable
+        true,   // durable
         false,   // delete when unused
         false,   // exclusive
         false,   // no-wait
@@ -38,7 +40,7 @@ func NewQueue(conn *amqp091.Connection, messageControllers ...MessageController)
       msgs, err := channel.Consume(
         queue.Name, // queue
         "",     // consumer
-        true,   // auto-ack
+        false,  // auto-ack
         false,  // exclusive
         false,  // no-local
         false,  // no-wait
@@ -49,13 +51,26 @@ func NewQueue(conn *amqp091.Connection, messageControllers ...MessageController)
         panic(err)
       }
 
-      go func() {
-        for d := range msgs {
-          c.Publish(d.Body)
+      go func(c *Channel, msgs <-chan amqp091.Delivery) {
+        for {
+          msg, ok := <-msgs
+          if !ok {
+            break
+          }
+
+          ack := c.Publish(msg.Body)
+
+          if ack {
+            msg.Ack(false)
+          } else {
+            msg.Nack(false, true)
+          }
         }
-      }()
+      }(&c, msgs)
     }
   }
+
+  <-forever
 }
 `;
   return (

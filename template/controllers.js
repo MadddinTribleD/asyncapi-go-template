@@ -28,7 +28,7 @@ function createServiceInterface(tagName, allChannels) {
 
   return `
 type ${tagName}Servicer interface {
-  ${channels.join('\n')}
+  ${channels.join('\n')} bool
 }`;
 }
 
@@ -73,11 +73,11 @@ function createChannels(tagName, allChannels) {
     const publish = channel.publish();
 
     return `
-func (c *${tagName}MessageController) ${publish.id()}(payloadByte []byte) {
+func (c *${tagName}MessageController) ${publish.id()}(payloadByte []byte) bool {
   payload := &${publish.message().payload().ext('x-parser-schema-id')}{}
   json.Unmarshal(payloadByte, &payload)
 
-  c.service.${publish.id()}(*payload)
+  return c.service.${publish.id()}(*payload)
 }`;
   });
 
